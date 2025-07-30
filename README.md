@@ -1,50 +1,76 @@
-# Prometheus + Grafana for Kubernetes Cluster Monitoring
-Instalación de prometheus y grafana en el clúster de kubernetes para el monitoreo de los nodos.
+📊 Prometheus + Grafana for Kubernetes Cluster Monitoring 📈
 
-# Adding bitnami repo for access to prometheus helm charts
+¡Bienvenido al setup de monitoreo para tu clúster de Kubernetes! Este README te guía para instalar Prometheus y Grafana, configurar el monitoreo de nodos y personalizar tu dashboard. 🚀
+
+Instalación de Prometheus y Grafana en el clúster de Kubernetes 🌐
+Añadir el repositorio Bitnami para acceder a los charts de Helm 📦
+Helm es un gestor de paquetes para Kubernetes que simplifica las instalaciones. Añade el repo de Bitnami:
+
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-```
-# helm is an packet manager for kubernetes
-```bash
 helm repo update
 ```
-# Installing prometheus via helm chart
+Instalar Prometheus vía chart de Helm 🎉
+Despliega Prometheus para monitoreo en tiempo real:
+
 ```bash
 helm install prometheus bitnami/kube-prometheus
 ```
-# For pod visualitation in real time
+
+Visualizar pods en tiempo real 👀
+Revisa el estado de los pods:
+
 ```bash
-k get po -w
+kubectl get po -w
 ```
-# Customize the helm chart for grafana dashboard
+
+Personalizar el chart de Helm para el dashboard de Grafana 🎨
+Edita un archivo values.yaml para configurar Grafana:
+
 ```bash
 nano values.yaml
 ```
+
+Añade la siguiente configuración:
+
 ```bash
 grafana:
   service:
     type: NodePort
 ```
+
+Instala el operador de Grafana:
+
 ```bash
 helm install grafana -f values.yaml bitnami/grafana-operator
 ```
-# Get the nodeport
+
+Obtener el NodePort 🔍
+Lista los servicios para encontrar el puerto expuesto:
+
 ```bash
-k get svc 
+kubectl get svc 
 ```
-# Create a password for the grafana defauld username(admin)
+
+Configuración de credenciales de Grafana 🔑
+Crear una contraseña para el usuario predeterminado (admin) 🛡️
+Intenta extraer la contraseña con este comando:
+
 ```bash
 echo "Password: $(kubectl get secret grafana-admin-credentials -o jsonpath="{.data.GF_SECURITY_ADMIN_PASSWORD}" | base64 --decode)
 ```
-# Puede darse el caso de que por problemas de versiones el comando anterior de error
-# La solucion que le encontre:
+
+⚠️ Si ocurre un error por problemas de versiones, sigue la solución alternativa.
+Solución alternativa: Extraer credenciales del secret correcto 🌟
+Si el comando anterior falla, inspecciona el secret:
 
 ```bash
 kubectl get secret grafana-grafana-operator-grafana-admin-credentials -o yaml
 ```
-# Te muestra lo siguiente, de aqui nos sirve  GF_SECURITY_ADMIN_PASSWORD: bVliRFNIR1lHdDk5cXc9PQ== y GF_SECURITY_ADMIN_USER: YWRtaW4=
-```bash
+
+Salida típica:
+
+```yaml
 apiVersion: v1
 data:
   GF_SECURITY_ADMIN_PASSWORD: bVliRFNIR1lHdDk5cXc9PQ==
@@ -71,19 +97,34 @@ metadata:
   uid: 4753d3e4-9d88-432b-a6db-e9cb5174c7a6
 type: Opaque
 ```
-# Entonces procedemos a desencriptar los valores GF_SECURITY_ADMIN_PASSWORD: bVliRFNIR1lHdDk5cXc9PQ== y GF_SECURITY_ADMIN_USER: YWRtaW4=
+Decodifica los valores:
+
 ```bash
 echo "Username: $(echo "YWRtaW4=" | base64 --decode)"
-Username: admin
- echo "Password: $(echo "bVliRFNIR1lHdDk5cXc9PQ==" | base64 --decode)"
-Password: mYbDSHGYGt99qw==
+echo "Password: $(echo "bVliRFNIR1lHdDk5cXc9PQ==" | base64 --decode)"
 ```
-# Una vez adentro cambiar password para el deseado
-# Add your first data source y seleccionamos Prometheus
-# En URL tenemos que poner el resultado de este codigo y buscamos el que tenga expuesto el puerto 9090
+
+Resultado:
+
+```text
+Username: admin
+Password: MybDSHGYt99qw==
+```
+
+Cambia la contraseña una vez dentro 🔧
+Accede a Grafana y actualiza la contraseña predeterminada por seguridad.
+Configurar la fuente de datos en Grafana 📊
+
+Añade tu primera fuente de datos y selecciona Prometheus.
+En la URL, usa el servicio de Prometheus. Lista los servicios:
 
 ```bash
 kubectl get svc
+```
+
+Salida ejemplo:
+
+```text
 NAME                                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
 alertmanager-operated                          ClusterIP   None            <none>        9093/TCP,9094/TCP,9094/UDP   34m
 grafana-grafana-operator-grafana-alerting      ClusterIP   None            <none>        9094/TCP                     26m
@@ -96,7 +137,10 @@ prometheus-kube-prometheus-prometheus          ClusterIP   xx.xx.xx.xx     <none
 prometheus-kube-state-metrics                  ClusterIP   xx.xx.xx.xx     <none>        8080/TCP                     35m
 prometheus-node-exporter                       ClusterIP   xx.xx.xx.xx     <none>        9100/TCP                     35m
 prometheus-operated                            ClusterIP   None            <none>        9090/TCP                     34m
+```
+Configura la URL como:
 
+```text
 url: http://prometheus-kube-prometheus-prometheus.default.svc.cluster.local:9090
 ```
-# Save and Test
+Haz clic en Save and Test para confirmar. ✅
